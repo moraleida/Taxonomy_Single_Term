@@ -1,12 +1,14 @@
 <?php
 
-if ( ! class_exists( 'Taxonomy_Single_Term' ) ) :
+namespace BetterNews\Taxonomy;
+
 /**
  * Removes and replaces the built-in taxonomy metabox with <select> or series of <input type="radio" />
  *
  * Usage:
  *
- * $custom_tax_mb = new Taxonomy_Single_Term( 'custom-tax-slug', array( 'post_type' ), 'type' ); // 'type' can be 'radio' or 'select' (default: radio)
+ * $custom_tax_mb = new Taxonomy_Single_Term( 'custom-tax-slug', array( 'post_type' ), 'type' ); // 'type' can be
+ * 'radio' or 'select' (default: radio)
  *
  * Update optional properties:
  *
@@ -17,14 +19,15 @@ if ( ! class_exists( 'Taxonomy_Single_Term' ) ) :
  * $custom_tax_mb->set( 'indented', false );
  * $custom_tax_mb->set( 'allow_new_terms', true );
  *
- * @link  http://codex.wordpress.org/Function_Reference/add_meta_box#Parameters
- * @link  https://github.com/WebDevStudios/Taxonomy_Single_Term/blob/master/README.md
+ * @link     http://codex.wordpress.org/Function_Reference/add_meta_box#Parameters
+ * @link     https://github.com/WebDevStudios/Taxonomy_Single_Term/blob/master/README.md
  * @version  0.2.2
  */
 class Taxonomy_Single_Term {
 
 	/**
 	 * Post types where metabox should be replaced (defaults to all post_types associated with taxonomy)
+	 *
 	 * @since 0.1.0
 	 * @var array
 	 */
@@ -32,6 +35,7 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Taxonomy slug
+	 *
 	 * @since 0.1.0
 	 * @var string
 	 */
@@ -39,6 +43,7 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Taxonomy object
+	 *
 	 * @since 0.1.0
 	 * @var object
 	 */
@@ -46,6 +51,7 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Taxonomy_Single_Term_Walker object
+	 *
 	 * @since 0.1.0
 	 * @var object
 	 */
@@ -53,6 +59,7 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * New metabox title. Defaults to Taxonomy name
+	 *
 	 * @since 0.1.0
 	 * @var string
 	 */
@@ -61,6 +68,7 @@ class Taxonomy_Single_Term {
 	/**
 	 * Metabox priority. (vertical placement)
 	 * 'high', 'core', 'default' or 'low'
+	 *
 	 * @since 0.1.0
 	 * @var string
 	 */
@@ -69,6 +77,7 @@ class Taxonomy_Single_Term {
 	/**
 	 * Metabox position. (column placement)
 	 * 'normal', 'advanced', or 'side'
+	 *
 	 * @since 0.1.0
 	 * @var string
 	 */
@@ -76,6 +85,7 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Set to true to hide "None" option & force a term selection
+	 *
 	 * @since 0.1.1
 	 * @var boolean
 	 */
@@ -83,6 +93,7 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Whether hierarchical taxonomy inputs should be indented to represent hierarchy
+	 *
 	 * @since 0.1.2
 	 * @var boolean
 	 */
@@ -90,31 +101,36 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Checks if there is a bulk-edit term to set
+	 *
 	 * @var boolean|term object
 	 */
 	protected $to_set = false;
 
 	/**
 	 * Array of post ids whose terms have been reset from bulk-edit. (prevents recursion)
+	 *
 	 * @var array
 	 */
 	protected $single_term_set = array();
 
 	/**
 	 * What input element to use in the taxonomy meta box (radio or select)
+	 *
 	 * @var array
 	 */
 	protected $input_element = 'radio';
 
 	/**
 	 * Whether adding new terms via the metabox is permitted
+	 *
 	 * @since 0.2.0
 	 * @var boolean
 	 */
 	protected $allow_new_terms = false;
-	
+
 	/**
 	 * Default for the selector
+	 *
 	 * @since 0.2.2
 	 * @var array
 	 */
@@ -122,18 +138,20 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Initiates our metabox action
+	 *
 	 * @since 0.1.0
-	 * @param string $tax_slug      Taxonomy slug
-	 * @param array  $post_types    post-types to display custom metabox
-	 * @param string $type 		display type radio or select
-	 * @param array  $default 	default for the taxonomy
+	 *
+	 * @param string $tax_slug   Taxonomy slug
+	 * @param array  $post_types post-types to display custom metabox
+	 * @param string $type       display type radio or select
+	 * @param array  $default    default for the taxonomy
 	 */
 	public function __construct( $tax_slug, $post_types = array(), $type = 'radio', $default = array() ) {
 
-		$this->slug = $tax_slug;
-		$this->post_types = is_array( $post_types ) ? $post_types : array( $post_types );
+		$this->slug          = $tax_slug;
+		$this->post_types    = is_array( $post_types ) ? $post_types : array( $post_types );
 		$this->input_element = in_array( (string) $type, array( 'radio', 'select' ) ) ? $type : $this->input_element;
-		$this->default = $this->process_default( $default );
+		$this->default       = $this->process_default( $default );
 
 		add_action( 'add_meta_boxes', array( $this, 'add_input_element' ) );
 		add_action( 'admin_footer', array( $this, 'js_checkbox_transform' ) );
@@ -144,10 +162,10 @@ class Taxonomy_Single_Term {
 			$this->bulk_edit_handler();
 		}
 	}
-	
+
 	/**
 	 * Process default value for settings
-	 * 
+	 *
 	 * @param array $default
 	 *
 	 * @return array
@@ -164,7 +182,7 @@ class Taxonomy_Single_Term {
 				continue;
 			}
 			$term = get_term_by( 'slug', $default_item, $this->slug );
-			if ( $term === false ) {
+			if ( false === $term ) {
 				$term = get_term_by( 'name', $default_item, $this->slug );
 			}
 			$default[ $index ] = ( $term instanceof WP_Term ) ? $term->term_id : false;
@@ -172,11 +190,10 @@ class Taxonomy_Single_Term {
 
 		return array_filter( $default );
 	}
-	
-	
 
 	/**
 	 * Removes and replaces the built-in taxonomy metabox with our own.
+	 *
 	 * @since 0.1.0
 	 */
 	public function add_input_element() {
@@ -192,32 +209,36 @@ class Taxonomy_Single_Term {
 			// remove default tag type metabox
 			remove_meta_box( 'tagsdiv-' . $this->slug, $cpt, 'side' );
 			// add our custom radio box
-			add_meta_box( $this->slug . '_input_element', $this->metabox_title(), array( $this, 'input_element' ), $cpt, $this->context, $this->priority );
+			add_meta_box( $this->slug . '_input_element', $this->metabox_title(), array(
+				$this,
+				'input_element',
+			), $cpt, $this->context, $this->priority );
 		}
 	}
 
 	/**
 	 * Displays our taxonomy input metabox
+	 *
 	 * @since 0.1.0
-	 * @todo Abstract inline javascript to it's own file and localize it
+	 * @todo  Abstract inline javascript to it's own file and localize it
 	 */
 	public function input_element() {
 
 		// uses same noncename as default box so no save_post hook needed
-		wp_nonce_field( 'taxonomy_'. $this->slug, 'taxonomy_noncename' );
+		wp_nonce_field( 'taxonomy_' . $this->slug, 'taxonomy_noncename' );
 
-		$class       = $this->indented ? 'taxonomydiv' : 'not-indented';
-		$class      .= 'category' !== $this->slug ? ' ' . $this->slug . 'div' : '';
-		$class      .= ' tabs-panel';
+		$class = $this->indented ? 'taxonomydiv' : 'not-indented';
+		$class .= 'category' !== $this->slug ? ' ' . $this->slug . 'div' : '';
+		$class .= ' tabs-panel';
 
-		$this->namefield    = 'category' == $this->slug ? 'post_category' : 'tax_input[' . $this->slug . ']';
-		$this->namefield    = $this->taxonomy()->hierarchical ? $this->namefield . '[]' : $this->namefield;
+		$this->namefield = 'category' == $this->slug ? 'post_category' : 'tax_input[' . $this->slug . ']';
+		$this->namefield = $this->taxonomy()->hierarchical ? $this->namefield . '[]' : $this->namefield;
 
 		$el_open_cb  = $this->input_element . '_open';
 		$el_close_cb = $this->input_element . '_close';
 
 		?>
-		<div id="taxonomy-<?php echo $this->slug; ?>" class="<?php echo $class; ?>">
+		<div id="taxonomy-<?php echo esc_attr( $this->slug ); ?>" class="<?php echo esc_attr( $class ); ?>">
 			<?php $this->{$el_open_cb}() ?>
 			<?php $this->term_fields_list(); ?>
 			<?php $this->{$el_close_cb}() ?>
@@ -231,64 +252,75 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Select wrapper open
+	 *
 	 * @since  0.2.0
 	 */
-	public function select_open() {
-		?>
-		<select style="display:block;width:100%;margin-top:12px;" name="<?php echo $this->namefield; ?>" id="<?php echo $this->slug; ?>checklist" class="form-no-clear">
-			<?php if ( ! $this->force_selection ) : ?>
-				<option value="0"><?php echo esc_html( apply_filters( 'taxonomy_single_term_select_none', __( 'None' ) ) ); ?></option>
-			<?php endif;
-	}
+public function select_open() {
 
-	/**
-	 * Radio wrapper open
-	 * @since  0.2.0
-	 */
-	public function radio_open() {
+	?>
+	<select style="display:block;width:100%;margin-top:12px;" name="<?php echo esc_attr( $this->namefield ); ?>"
+			id="<?php echo esc_attr( $this->slug ); ?>checklist" class="form-no-clear">
+		<?php if ( ! $this->force_selection ) : ?>
+			<option value="0"><?php echo esc_html( apply_filters( 'taxonomy_single_term_select_none', __( 'None' ) ) ); ?></option>
+		<?php endif;
+		}
+
+		/**
+		 * Radio wrapper open
+		 *
+		 * @since  0.2.0
+		 */
+		public function radio_open() {
 		?>
-		<ul id="<?php echo $this->slug; ?>checklist" data-wp-lists="list:<?php echo $this->slug; ?>" class="categorychecklist form-no-clear">
+		<ul id="<?php echo esc_attr( $this->slug ); ?>checklist"
+			data-wp-lists="list:<?php echo esc_attr( $this->slug ); ?>"
+			class="categorychecklist form-no-clear">
 			<?php if ( ! $this->force_selection ) : ?>
 				<li style="display:none;">
-					<input id="taxonomy-<?php echo $this->slug; ?>-clear" type="radio" name="<?php echo $this->namefield; ?>" value="0" />
+					<input id="taxonomy-<?php echo esc_attr( $this->slug ); ?>-clear" type="radio"
+						   name="<?php echo esc_attr( $this->namefield ); ?>" value="0"/>
 				</li>
 			<?php endif;
-	}
+			}
 
-	/**
-	 * Select wrapper close
-	 * @since  0.2.0
-	 */
-	public function select_close() {
-		?>
-		</select>
-		<?php
-	}
+			/**
+			 * Select wrapper close
+			 *
+			 * @since  0.2.0
+			 */
+			public function select_close() {
+			?>
+	</select>
+	<?php
+}
 
 	/**
 	 * Radio wrapper close
+	 *
 	 * @since  0.2.0
 	 */
 	public function radio_close() {
 		?>
 		</ul>
 		<p style="margin-bottom:0;float:left;width:50%;">
-			<a class="button" id="taxonomy-<?php echo $this->slug; ?>-trigger-clear" href="#"><?php _e( 'Clear' ); ?></a>
+			<a class="button" id="taxonomy-<?php echo esc_attr( $this->slug ); ?>-trigger-clear"
+			   href="#"><?php esc_html_e( 'Clear' ); ?></a>
 		</p>
 		<script type="text/javascript">
-			jQuery(document).ready(function($){
-				$('#taxonomy-<?php echo $this->slug; ?>-trigger-clear').click(function(){
-					$('#taxonomy-<?php echo $this->slug; ?> input:checked').prop( 'checked', false );
-					$('#taxonomy-<?php echo $this->slug; ?>-clear').prop( 'checked', true );
+			jQuery( document ).ready( function( $ ) {
+				$( '#taxonomy-<?php echo esc_js( $this->slug ); ?>-trigger-clear' ).click( function() {
+					$( '#taxonomy-<?php echo esc_js( $this->slug ); ?> input:checked' ).prop( 'checked', false );
+					$( '#taxonomy-<?php echo esc_js( $this->slug ); ?>-clear' ).prop( 'checked', true );
 					return false;
-				});
-			});
+				} );
+			} );
 		</script>
 		<?php
 	}
 
 	/**
 	 * wp_terms_checklist wrapper which outputs the terms list
+	 *
 	 * @since  0.2.0
 	 */
 	public function term_fields_list() {
@@ -296,11 +328,11 @@ class Taxonomy_Single_Term {
 			get_the_ID(),
 			$this->slug
 		);
-		
+
 		if ( is_wp_error( $default ) ) {
 			$default = array();
 		}
-		
+
 		$default[] = $this->default;
 		$default   = (array) current( $default );
 
@@ -318,75 +350,84 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Adds button (and associated JS) for adding new terms
+	 *
 	 * @since 0.2.0
 	 */
 	public function terms_adder_button() {
 		?>
 		<p style="margin-bottom:0;float:right;width:50%;text-align:right;">
-			<a class="button-secondary" id="taxonomy-<?php echo $this->slug; ?>-new" href="#"<?php if ( 'radio' == $this->input_element ) : ?> style="display:inline-block;margin-top:0.4em;"<?php endif; ?>><?php _e( 'Add New' ); ?></a>
+			<a class="button-secondary" id="taxonomy-<?php echo esc_attr( $this->slug ); ?>-new"
+			   href="#"<?php if ( 'radio' === $this->input_element ) : ?> style="display:inline-block;margin-top:0.4em;"<?php endif; ?>><?php esc_html_e( 'Add New' ); ?></a>
 		</p>
 		<script type="text/javascript">
-			jQuery(document).ready(function($){
-				$('#taxonomy-<?php echo $this->slug; ?>-new').click(function(e){
+			jQuery( document ).ready( function( $ ) {
+				var slug      = "<?php echo esc_js( $this->slug ); ?>",
+					taxonomy  = "<?php echo esc_js( $this->taxonomy()->labels->singular_name ); ?>",
+					nonce     = '<?php echo wp_create_nonce( 'taxonomy_' . $this->slug, '_add_term' ); ?>',
+					isRadio   = <?php 'radio' === $this->input_element ?>,
+					alertText = '<?php printf( __( 'There was a problem adding a new %s' ), esc_attr( $this->taxonomy()->labels->singular_name ) ); ?>';
+
+				$( '#taxonomy-' + slug + '-new' ).click( function( e ) {
 					e.preventDefault();
 
-					var termName = prompt( "Add New <?php echo esc_attr( $this->taxonomy()->labels->singular_name ); ?>", "New <?php echo esc_attr( $this->taxonomy()->labels->singular_name ); ?>" );
+					var termName = prompt( "Add New " + taxonomy, "New " + taxonomy );
 
-					if( ! termName ) {
+					if ( !termName ) {
 						return;
 					}
-					if(termName != null) {
+					if ( termName != null ) {
 						var data = {
-							'action'    : 'taxonomy_single_term_add',
-							'term_name' : termName,
-							'taxonomy'  : '<?php echo $this->slug; ?>',
-							'nonce'     : '<?php echo wp_create_nonce( 'taxonomy_'. $this->slug, '_add_term' ); ?>'
+							'action': 'taxonomy_single_term_add',
+							'term_name': termName,
+							'taxonomy': slug,
+							'nonce': nonce
 						};
-						$.post( ajaxurl, data, function(response) {
+						$.post( ajaxurl, data, function( response ) {
 							window.console.log( 'response', response );
-							if( response.success ){
-								<?php if ( 'radio' == $this->input_element ) : ?>
-									$('#taxonomy-<?php echo $this->slug; ?> input:checked').prop( 'checked', false );
-								<?php else : ?>
-									$('#taxonomy-<?php echo $this->slug; ?> option').prop( 'selected', false );
-								<?php endif; ?>
-								$('#<?php echo $this->slug; ?>checklist').append( response.data );
+							if ( response.success ) {
+								if ( isRadio ) {
+									$( '#taxonomy-' + slug + ' input:checked' ).prop( 'checked', false );
+								} else {
+									$( '#taxonomy-' + slug + ' option' ).prop( 'selected', false );
+								}
+								$( '#' + slug + 'checklist' ).append( response.data );
 							} else {
-								window.alert( '<?php printf( __( 'There was a problem adding a new %s' ), esc_attr( $this->taxonomy()->labels->singular_name ) ); ?>: ' + "\n" + response.data );
+								window.alert( alertText + ":\n" + response.data );
 							}
-						});
+						} );
 					}
-				});
-			});
+				} );
+			} );
 		</script>
 		<?php
 	}
 
 	/**
 	 * AJAX callback to add terms inline
+	 *
 	 * @since 0.2.0
 	 */
 	function ajax_add_term() {
 		$nonce     = isset( $_POST['nonce'] ) ? sanitize_text_field( $_POST['nonce'] ) : '';
 		$term_name = isset( $_POST['term_name'] ) ? sanitize_text_field( $_POST['term_name'] ) : false;
 		$taxonomy  = isset( $_POST['taxonomy'] ) ? sanitize_text_field( $_POST['taxonomy'] ) : false;
-		
+
 		$friendly_taxonomy = $this->taxonomy()->labels->singular_name;
-		
+
 		// Ensure user is allowed to add new terms
-		if( !$this->allow_new_terms ) {
+		if ( ! $this->allow_new_terms ) {
 			wp_send_json_error( __( "New $friendly_taxonomy terms are not allowed" ) );
 		}
 
-		if( !taxonomy_exists( $taxonomy ) ) {
+		if ( ! taxonomy_exists( $taxonomy ) ) {
 			wp_send_json_error( __( "Taxonomy $friendly_taxonomy does not exist. Cannot add term" ) );
 		}
 
-		if( !wp_verify_nonce( $nonce, 'taxonomy_' . $taxonomy, '_add_term' ) ) {
+		if ( ! wp_verify_nonce( $nonce, 'taxonomy_' . $taxonomy, '_add_term' ) ) {
 			wp_send_json_error( __( "Cheatin' Huh? Could not verify security token" ) );
 		}
 
-		if( term_exists( $term_name, $taxonomy ) ) {
+		if ( term_exists( $term_name, $taxonomy ) ) {
 			wp_send_json_error( __( "The term '$term_name' already exists in $friendly_taxonomy" ) );
 		}
 
@@ -402,8 +443,7 @@ class Taxonomy_Single_Term {
 			wp_send_json_error();
 		}
 
-
-		$field_name = $taxonomy == 'category'
+		$field_name = 'category' === $taxonomy
 			? 'post_category'
 			: 'tax_input[' . $taxonomy . ']';
 
@@ -412,13 +452,13 @@ class Taxonomy_Single_Term {
 			: $field_name;
 
 		$args = array(
-			'id'            => $taxonomy . '-' . $term->term_id,
-			'name'          => $field_name,
-			'value'         => $this->taxonomy()->hierarchical ? $term->term_id : $term->slug,
-			'checked'       => ' checked="checked"',
-			'selected'      => ' selected="selected"',
-			'disabled'      => '',
-			'label'         => esc_html( apply_filters( 'the_category', $term->name ) ),
+			'id'       => $taxonomy . '-' . $term->term_id,
+			'name'     => $field_name,
+			'value'    => $this->taxonomy()->hierarchical ? $term->term_id : $term->slug,
+			'checked'  => ' checked="checked"',
+			'selected' => ' selected="selected"',
+			'disabled' => '',
+			'label'    => esc_html( apply_filters( 'the_category', $term->name ) ),
 		);
 
 		$output = '';
@@ -435,10 +475,11 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Add some JS to the post listing page to transform the quickedit inputs
+	 *
 	 * @since  0.1.3
 	 */
 	public function js_checkbox_transform() {
-		$screen = get_current_screen();
+		$screen   = get_current_screen();
 		$taxonomy = $this->taxonomy();
 
 		if (
@@ -446,61 +487,64 @@ class Taxonomy_Single_Term {
 			|| ! isset( $taxonomy->object_type )
 			|| ! isset( $screen->post_type )
 			|| ! in_array( $screen->post_type, $taxonomy->object_type )
-		)
+		) {
 			return;
+		}
 
 		?>
 		<script type="text/javascript">
 			// Handles changing input types to radios for WDS_Taxonomy_Radio
-			jQuery(document).ready(function($){
-				var $postsFilter = $('#posts-filter');
-				var $theList = $postsFilter.find('#the-list');
+			jQuery( document ).ready( function( $ ) {
+				var $postsFilter = $( '#posts-filter' ),
+					$theList     = $postsFilter.find( '#the-list' ),
+					slug         = '<?php echo esc_js( $this->slug ); ?>';
 
 				// Handles changing the input type attributes
 				var changeToRadio = function( $context ) {
 					$context = $context ? $context : $theList;
-					var $taxListInputs = $context.find( '.<?php echo $this->slug; ?>-checklist li input' );
+					var $taxListInputs = $context.find( '.' + slug + '-checklist li input' );
 					if ( $taxListInputs.length ) {
 						// loop and switch input types
 						$taxListInputs.each( function() {
-							$(this).attr( 'type', 'radio' ).addClass('transformed-to-radio');
-						});
+							$( this ).attr( 'type', 'radio' ).addClass( 'transformed-to-radio' );
+						} );
 					}
 				};
 
 				$postsFilter
-					// Handle converting radios in bulk-edit row
-					.on( 'click', '#doaction, #doaction2', function(){
-						var name = $(this).attr('id').substr(2);
+				// Handle converting radios in bulk-edit row
+					.on( 'click', '#doaction, #doaction2', function() {
+						var name = $( this ).attr( 'id' ).substr( 2 );
 						if ( 'edit' === $( 'select[name="' + name + '"]' ).val() ) {
 							setTimeout( function() {
-								changeToRadio( $theList.find('#bulk-edit') );
+								changeToRadio( $theList.find( '#bulk-edit' ) );
 							}, 50 );
 						}
-					})
+					} )
 					// when clicking new radio inputs, be sure to uncheck all but the one clicked
 					.on( 'change', '.transformed-to-radio', function() {
-						var $this = $(this);
-						$siblings = $this.parents( '.<?php echo $this->slug; ?>-checklist' ).find( 'li .transformed-to-radio' ).prop( 'checked', false );
+						var $this = $( this );
+						$siblings = $this.parents( '.' + slug + '-checklist' ).find( 'li .transformed-to-radio' ).prop( 'checked', false );
 						$this.prop( 'checked', true );
-					});
+					} );
 
 				// Handle converting radios in inline-edit rows
-				$theList.find('.editinline').on( 'click', function() {
-					var $this = $(this);
+				$theList.find( '.editinline' ).on( 'click', function() {
+					var $this = $( this );
 					setTimeout( function() {
 						var $editRow = $this.parents( 'tr' ).next().next();
 						changeToRadio( $editRow );
 					}, 50 );
-				});
+				} );
 
-			});
+			} );
 		</script>
 		<?php
 	}
 
 	/**
 	 * Handles checking if object terms need to be set when bulk-editing posts
+	 *
 	 * @since  0.2.1
 	 */
 	public function bulk_edit_handler() {
@@ -532,7 +576,9 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Handles resaving terms to post when bulk-editing so that only one term will be applied
+	 *
 	 * @since  0.1.4
+	 *
 	 * @param  int    $object_id  Object ID.
 	 * @param  array  $terms      An array of object terms.
 	 * @param  array  $tt_ids     An array of term taxonomy IDs.
@@ -559,36 +605,43 @@ class Taxonomy_Single_Term {
 
 	/**
 	 * Gets the taxonomy object from the slug
+	 *
 	 * @since 0.1.0
 	 * @return object Taxonomy object
 	 */
 	public function taxonomy() {
 		$this->taxonomy = $this->taxonomy ? $this->taxonomy : get_taxonomy( $this->slug );
+
 		return $this->taxonomy;
 	}
 
 	/**
 	 * Gets the taxonomy's associated post_types
+	 *
 	 * @since 0.1.0
 	 * @return array Taxonomy's associated post_types
 	 */
 	public function post_types() {
-		$this->post_types = !empty( $this->post_types ) ? $this->post_types : $this->taxonomy()->object_type;
+		$this->post_types = ! empty( $this->post_types ) ? $this->post_types : $this->taxonomy()->object_type;
+
 		return $this->post_types;
 	}
 
 	/**
 	 * Gets the metabox title from the taxonomy object's labels (or uses the passed in title)
+	 *
 	 * @since 0.1.0
 	 * @return string Metabox title
 	 */
 	public function metabox_title() {
-		$this->metabox_title = !empty( $this->metabox_title ) ? $this->metabox_title : $this->taxonomy()->labels->name;
+		$this->metabox_title = ! empty( $this->metabox_title ) ? $this->metabox_title : $this->taxonomy()->labels->name;
+
 		return $this->metabox_title;
 	}
 
 	/**
 	 * Gets the Taxonomy_Single_Term_Walker object for use in term_fields_list and ajax_add_term
+	 *
 	 * @since 0.2.0
 	 * @return object Taxonomy_Single_Term_Walker object
 	 */
@@ -596,7 +649,6 @@ class Taxonomy_Single_Term {
 		if ( $this->walker ) {
 			return $this->walker;
 		}
-		require_once( 'walker.taxonomy-single-term.php' );
 		$this->walker = new Taxonomy_Single_Term_Walker( $this->taxonomy()->hierarchical, $this->input_element );
 
 		return $this->walker;
@@ -607,8 +659,8 @@ class Taxonomy_Single_Term {
 	 *
 	 * @since 0.2.1
 	 *
-	 * @param string $property  Property in object.  Must be set in object.
-	 * @param mixed  $value     Value of property.
+	 * @param string $property Property in object.  Must be set in object.
+	 * @param mixed  $value    Value of property.
 	 *
 	 * @return Taxonomy_Single_Term  Returns Taxonomy_Single_Term object, allows for chaining.
 	 */
@@ -633,19 +685,18 @@ class Taxonomy_Single_Term {
 	 * @since  0.2.1
 	 *
 	 * @param  string    Property in object to retrieve.
+	 *
 	 * @throws Exception Throws an exception if the field is invalid.
 	 *
 	 * @return mixed     Property requested.
 	 */
 	public function __get( $property ) {
-		
+
 		if ( property_exists( $this, $property ) ) {
 			return $this->{$property};
 		}
-		
-		throw new Exception( 'Invalid '. __CLASS__ .' property: ' . $property );	
+
+		throw new Exception( 'Invalid ' . __CLASS__ . ' property: ' . $property );
 	}
 
 }
-
-endif; // class_exists check
